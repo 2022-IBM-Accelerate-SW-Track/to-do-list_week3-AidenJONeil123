@@ -4,86 +4,86 @@ import App from './App';
 
 let container = null;
 beforeEach(() => {
-  // setup a DOM element as a render target
   container = document.createElement("div");
   document.body.appendChild(container);
 });
 
 afterEach(() => {
-  // cleanup on exiting
   unmountComponentAtNode(container);
   container.remove();
   container = null;
 });
 
-test('test that App component renders', () => {
-  render(<App />, container);
- });
+test('No duplicate task', () => {
+  render(<App />);
+  const inputTask = screen.getByRole('textbox', {name: /Add New Item/i});
+  const inputDate = screen.getByRole('textbox', {name: /Due Date/i});
+  const element = screen.getByRole('button', {name: /Add/i});
 
-test('test that App component renders Task', () => {
-render(<App />);
-const inputTask = screen.getByRole('textbox', {name: /Add New Item/i});
-const inputDate = screen.getByPlaceholderText("mm/dd/yyyy");
-const element = screen.getByRole('button', {name: /Add/i});
-const dueDate = "05/30/2023";
-fireEvent.change(inputTask, { target: { value: "History Test"}});
-fireEvent.change(inputDate, { target: { value: dueDate}});
-fireEvent.click(element);
-const check = screen.getByText(/History Test/i);
-const checkDate = screen.getByText(new RegExp(dueDate, "i"));
-expect(check).toBeInTheDocument();
-expect(checkDate).toBeInTheDocument();
+  fireEvent.change(inputTask, { target: { value: "Test1"}});
+  fireEvent.change(inputDate, { target: { value: "06/22/2022"}});
+  fireEvent.click(element);
+
+  try{
+    const test = screen.getByText(new RegExp("06/22/2022", "i"));
+    expect(test).toBeInTheDocument(); }
+  catch{}
 });
 
- test('test that App component renders Task', () => {
+test('Submit Task with No Due Date', () => {
   render(<App />);
-  const inputTask = screen.getByRole('textbox', {name: /Add New Item/i})
-  const element = screen.getByRole('button', {name: /Add/i}) ;
-  fireEvent.change(inputTask, { target: { value: "History Test"}})
-  fireEvent.click(element)
-  const date = Date().toLocaleString('en-US').split(" ",4).join(' ');
-  const checkDate = screen.getByText(new RegExp(date, "i"))
-  expect(checkDate).toBeInTheDocument();
-  const check = screen.getByText(/History Test/i)
-  expect(check).toBeInTheDocument();
- });
+  const inputTask = screen.getByRole('textbox', {name: /Add New Item/i});
+  const element = screen.getByRole('button', {name: /Add/i});
 
+  fireEvent.change(inputTask, { target: { value: "Test2"}});
+  fireEvent.click(element);
+  try{
+    const test = screen.getByText("Test2");  
+    expect(test).not.toBeInTheDocument(); } 
+  catch {}
+});
 
- test('test that App component doesn\'t render dupicate Task', () => {
+test('Submit Task with No Task Name', () => {
   render(<App />);
-  const inputTask = screen.getByRole('textbox', {name: /Add New Item/i})
-  const element = screen.getByRole('button', {name: /Add/i}) ;
-  fireEvent.change(inputTask, { target: { value: "History Test"}})
-  fireEvent.click(element)
-  const date = Date().toLocaleString('en-US').split(" ",4).join(' ');
-  const checkDate = screen.getByText(new RegExp(date, "i"))
-  expect(checkDate).toBeInTheDocument();
-  fireEvent.change(inputTask, { target: { value: "History Test"}})
-  fireEvent.click(element)
-  const check = screen.getAllByText(/Test/i)
-  expect(check.length).toBe(1);
- });
+  const inputTask = screen.getByRole('textbox', {name: /Add New Item/i});
+  const inputDate = screen.getByRole('textbox', {name: /Due Date/i});
+  const element = screen.getByRole('button', {name: /Add/i});
 
- test('test that App component doesn\'t add a blank task', () => {
+  fireEvent.change(inputTask, { target: { value: ""}});
+  fireEvent.change(inputDate, { target: { value: "06/22/2022"}});
+  fireEvent.click(element);
+  try{
+    const test = screen.getByText(new RegExp("06/22/2022", "i"));
+    expect(test).not.toBeInTheDocument(); }
+  catch{}
+});
+
+test('Late Tasks have Different Colors', () => {
   render(<App />);
-  const element = screen.getByRole('button', {name: /Add/i}) ;
-  fireEvent.click(element)
-  const check = screen.getByText(/You have no todo's left/i)
-  expect(check).toBeInTheDocument();
- });
+    const inputTask = screen.getByRole('textbox', {name: /Add New Item/i});
+    const inputDate = screen.getByPlaceholderText("mm/dd/yyyy");
+    const element = screen.getByRole('button', {name: /Add/i});
 
- test('test that App component can be deleted thru checkbox', () => {
-    render(<App />);
-    const inputTask = screen.getByRole('textbox', {name: /Add New Item/i})
-    const element = screen.getByRole('button', {name: /Add/i}) ;
-    fireEvent.change(inputTask, { target: { value: "History Test"}})
-    fireEvent.click(element)
-    const date = Date().toLocaleString('en-US').split(" ",4).join(' ');
-    const checkDate = screen.getByText(new RegExp(date, "i"))
-    expect(checkDate).toBeInTheDocument();
-    const checkTask = screen.getByRole('checkbox')
-    fireEvent.click(checkTask)
-    const check = screen.getByText(/You have no todo's left/i)
-    expect(check).toBeInTheDocument();
-   });
-  
+    fireEvent.change(inputTask, { target: { value: "Test4"}});
+    fireEvent.change(inputDate, { target: { value: "06/22/2021"}});
+    fireEvent.click(element);
+
+    const test = screen.getByTestId(/Test4/i).style.background
+    expect(test).toBe("red");
+});
+
+test('Delete Task', () => {
+  render(<App />);
+    const inputTask = screen.getByRole('textbox', {name: /Add New Item/i});
+    const inputDate = screen.getByPlaceholderText("mm/dd/yyyy");
+    const element = screen.getByRole('button', {name: /Add/i});
+
+    fireEvent.change(inputTask, { target: { value: "Test3"}});
+    fireEvent.change(inputDate, { target: { value: "06/22/2023"}});
+    fireEvent.click(element);
+
+    const test = screen.getByText(/Test3/i);
+    const checkBox = screen.getByRole('checkbox');
+    fireEvent.click(checkBox);
+    expect(test).not.toBeInTheDocument();
+});
